@@ -1,0 +1,762 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>From Silence to Signal</title>
+<meta name="description" content="A personal statement by a self-taught music producer heading into Electrical Engineering.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@500;700;900&family=JetBrains+Mono:wght@400;500&family=Literata:ital,opsz,wght@0,7..72,400;0,7..72,500;1,7..72,400&display=swap">
+<style>
+/* Layout: an album played in order. One oscilloscope trace runs behind the whole page and
+   changes with each track; a transport bar keeps the "song" timecode as you scroll. */
+:root {
+  --ink: #0d0f1d;        /* studio at night */
+  --panel: #161a2d;
+  --line: #2a3050;
+  --text: #ebe7f3;
+  --muted: #9b9dbb;
+  --amber: #ffb547;      /* the signal */
+  --amber-dim: rgba(255,181,71,.16);
+  --rose: #ff5d73;       /* clip light */
+  --qr-bg: #fff7e8;
+  --qr-fg: #0d0f1d;
+  --display: "Big Shoulders Display", "Arial Narrow", Impact, sans-serif;
+  --body: "Literata", Georgia, "Times New Roman", serif;
+  --mono: "JetBrains Mono", ui-monospace, Consolas, monospace;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { margin: 0; }
+img { max-width: 100%; }
+[hidden] { display: none !important; }
+html { scroll-behavior: smooth; }
+body {
+  background: var(--ink);
+  color: var(--text);
+  font-family: var(--body);
+  font-size: 1.075rem;
+  line-height: 1.7;
+  overflow-x: hidden;
+}
+#scope { position: fixed; inset: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; }
+main { position: relative; z-index: 1; }
+.wrap {
+  max-width: 1080px; margin: 0 auto;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+.mono { font-family: var(--mono); font-size: .78rem; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+h1, h2, h3 { font-family: var(--display); text-wrap: balance; margin: 0; line-height: .95; text-transform: uppercase; }
+a { color: var(--amber); }
+:focus-visible { outline: 2px solid var(--amber); outline-offset: 3px; }
+
+/* Hero */
+.hero { padding-block: clamp(72px, 14vh, 150px) 64px; }
+.hero .eyebrow { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+.rec { display: inline-flex; align-items: center; gap: 8px; color: var(--rose); }
+.rec::before { content: ""; width: 9px; height: 9px; border-radius: 50%; background: var(--rose); animation: blink 1.4s steps(2) infinite; }
+@keyframes blink { 50% { opacity: .2; } }
+.hero h1 { font-size: clamp(3.6rem, 13vw, 10.5rem); font-weight: 900; letter-spacing: -.01em; margin-top: 18px; }
+.hero h1 .quiet { color: var(--muted); font-weight: 500; display: block; }
+.hero h1 .sig { color: var(--amber); display: block; }
+.hero .lede { max-width: 38ch; font-size: clamp(1.1rem, 2.2vw, 1.35rem); margin: 28px 0 0; }
+.hero .cta { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 36px; }
+.btn {
+  font-family: var(--mono); font-size: .8rem; letter-spacing: .08em; text-transform: uppercase;
+  border: 1px solid var(--amber); color: var(--amber); background: transparent;
+  padding: 12px 18px; border-radius: 2px; cursor: pointer; text-decoration: none;
+  display: inline-flex; align-items: center; gap: 10px;
+}
+.btn.solid { background: var(--amber); color: var(--ink); }
+.btn:hover { background: var(--amber-dim); color: var(--amber); }
+.btn.solid:hover { background: #ffc66e; color: var(--ink); }
+
+/* Message + audience */
+.brief { display: grid; grid-template-columns: 1.2fr 1fr; gap: 40px; padding-block: 40px 90px; }
+.brief > * { min-width: 0; }
+.message { font-family: var(--display); font-size: clamp(1.9rem, 4vw, 2.9rem); line-height: 1.05; text-transform: uppercase; font-weight: 700; margin: 12px 0 0; text-wrap: balance; }
+.message em { font-style: normal; color: var(--amber); }
+.audience { list-style: none; padding: 0; margin: 12px 0 0; display: grid; gap: 0; border-top: 1px solid var(--line); }
+.audience li { padding: 14px 0; border-bottom: 1px solid var(--line); display: grid; grid-template-columns: 7.5em 1fr; gap: 12px; }
+.audience b { font-family: var(--mono); font-weight: 500; font-size: .74rem; letter-spacing: .08em; text-transform: uppercase; color: var(--amber); padding-top: 4px; }
+.audience span { font-size: .98rem; }
+
+/* Tracks */
+.track { padding-block: 110px; position: relative; }
+.track .head { display: grid; grid-template-columns: auto 1fr; gap: 6px 22px; align-items: end; margin-bottom: 36px; }
+.track .num { font-family: var(--display); font-weight: 900; font-size: clamp(4rem, 10vw, 7.5rem); line-height: .8; color: transparent; -webkit-text-stroke: 1.5px var(--amber); grid-row: span 2; }
+.track h2 { font-size: clamp(2.4rem, 6vw, 4.4rem); font-weight: 700; }
+.track .cols { display: grid; grid-template-columns: minmax(0, 62ch) minmax(0, 1fr); gap: 56px; align-items: start; }
+.prose p { margin: 0 0 1.1em; }
+.prose { background: linear-gradient(90deg, rgba(13,15,29,.86), rgba(13,15,29,.6)); padding: 4px 0; }
+.pull {
+  font-family: var(--display); font-weight: 700; text-transform: uppercase;
+  font-size: clamp(1.7rem, 3.4vw, 2.5rem); line-height: 1.02; margin: 0; color: var(--text);
+  border-left: 3px solid var(--amber); padding-left: 20px; text-wrap: balance;
+}
+.pull small { display: block; margin-top: 14px; font-family: var(--mono); font-weight: 400; font-size: .72rem; letter-spacing: .1em; color: var(--muted); text-transform: uppercase; }
+.side { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 90px); display: grid; gap: 26px; }
+
+/* Reveal: elements start visible; JS only nudges ones below the fold */
+.rv { transition: transform .9s cubic-bezier(.2,.7,.2,1), opacity .9s; }
+.rv.pre { transform: translateY(26px); opacity: .25; }
+
+/* Track 02: notes */
+.notes { display: grid; gap: 10px; font-family: var(--body); font-style: italic; color: var(--muted); }
+.notes span { display: block; background: var(--panel); border: 1px solid var(--line); padding: 10px 14px; transform: rotate(var(--r)); width: fit-content; max-width: 100%; }
+.notes span.song { font-style: normal; color: var(--ink); background: var(--amber); border-color: var(--amber); font-family: var(--mono); font-size: .8rem; letter-spacing: .08em; text-transform: uppercase; }
+
+/* Track 03: take counter */
+.takebox { border: 1px solid var(--line); background: var(--panel); padding: 20px; display: grid; gap: 14px; }
+.takebox .row { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+.take { font-family: var(--display); font-weight: 900; font-size: 4.2rem; line-height: .9; font-variant-numeric: tabular-nums; }
+.lamp { font-family: var(--mono); font-size: .74rem; letter-spacing: .1em; padding: 6px 10px; border: 1px solid var(--rose); color: var(--rose); }
+.lamp.good { border-color: var(--amber); color: var(--ink); background: var(--amber); }
+.meter { height: 10px; background: var(--ink); border: 1px solid var(--line); position: relative; overflow: hidden; }
+.meter i { position: absolute; inset: 0 auto 0 0; width: 50%; background: linear-gradient(90deg, var(--amber) 70%, var(--rose)); }
+.snr { font-family: var(--mono); font-size: .78rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+
+/* Track 04: console */
+.console { margin-top: 56px; border: 1px solid var(--line); background: var(--panel); display: grid; grid-template-columns: minmax(0,1.5fr) minmax(0,1fr); }
+.console .screen { padding: 18px; border-right: 1px solid var(--line); min-width: 0; }
+.console canvas { width: 100%; height: 240px; display: block; background: var(--ink); border: 1px solid var(--line); }
+.console .knobs { padding: 18px 22px; display: grid; gap: 18px; align-content: start; }
+.knob label { display: flex; justify-content: space-between; font-family: var(--mono); font-size: .74rem; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.knob output { color: var(--amber); font-variant-numeric: tabular-nums; }
+.knob p { margin: 4px 0 0; font-size: .85rem; color: var(--muted); line-height: 1.45; }
+input[type=range] { width: 100%; accent-color: var(--amber); margin: 8px 0 0; }
+.console .bar { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-top: 14px; }
+.questions { list-style: none; padding: 0; margin: 0; display: grid; gap: 14px; }
+.questions li { font-family: var(--display); font-size: 1.6rem; text-transform: uppercase; font-weight: 700; line-height: 1.05; color: var(--muted); }
+.questions li::before { content: "? "; color: var(--amber); }
+
+/* Track 05: circuit */
+.circuit { width: 100%; height: auto; display: block; }
+.circuit .trace { fill: none; stroke: var(--amber); stroke-width: 2.5; stroke-linecap: square; }
+.circuit .pad { fill: var(--ink); stroke: var(--amber); stroke-width: 2; }
+.circuit .node rect { fill: var(--panel); stroke: var(--line); stroke-width: 1.5; }
+.circuit .node.main rect { fill: var(--amber); stroke: var(--amber); }
+.circuit text { font-family: var(--mono); font-size: 13px; letter-spacing: .06em; fill: var(--text); text-transform: uppercase; }
+.circuit .node.main text { fill: var(--ink); font-family: var(--display); font-size: 26px; font-weight: 900; letter-spacing: .02em; }
+.circuit .spark { fill: var(--amber); }
+
+/* Track 06 finale */
+.finale { text-align: left; }
+.finale h2.big { font-size: clamp(2.8rem, 9vw, 7rem); font-weight: 900; line-height: .9; }
+.finale h2.big span { color: var(--amber); }
+
+/* Credits */
+.credits { padding-block: 90px; }
+.credits h2 { font-size: clamp(2.2rem, 5vw, 3.6rem); margin: 10px 0 30px; }
+.credit-list { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 0 48px; }
+.credit { border-top: 1px solid var(--line); padding: 18px 0 20px; }
+.credit .k { display: flex; align-items: baseline; gap: 10px; font-family: var(--mono); font-size: .76rem; letter-spacing: .1em; text-transform: uppercase; color: var(--amber); }
+.credit .k::after { content: ""; flex: 1; border-bottom: 1px dotted var(--line); }
+.credit h3 { font-size: 1.8rem; margin: 8px 0 6px; font-weight: 700; }
+.credit p { margin: 0; color: var(--muted); font-size: .98rem; }
+
+/* Share */
+.share { padding-block: 90px; display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1.4fr); gap: 48px; align-items: start; }
+.share h2 { font-size: clamp(2.2rem, 5vw, 3.6rem); margin: 10px 0 18px; }
+.qr-card { background: var(--qr-bg); color: var(--qr-fg); padding: 22px; display: grid; gap: 14px; max-width: 360px; }
+.qr-card .qr svg { width: 100%; height: auto; display: block; }
+.qr-card .qr svg rect[fill="white"], .qr-card .qr svg rect[fill="#ffffff"] { fill: var(--qr-bg); }
+.qr-card .qr svg path { fill: var(--qr-fg); }
+.qr-card .cap { font-family: var(--mono); font-size: .72rem; letter-spacing: .08em; text-transform: uppercase; display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+.qr-card .url { font-family: var(--mono); font-size: .72rem; word-break: break-all; user-select: all; }
+.posts { display: grid; gap: 16px; }
+.post { border: 1px solid var(--line); background: var(--panel); padding: 18px 20px; display: grid; gap: 12px; }
+.post .meta { display: flex; justify-content: space-between; gap: 10px; align-items: center; flex-wrap: wrap; }
+.post blockquote { margin: 0; font-size: 1rem; }
+.post .tags { color: var(--amber); font-family: var(--mono); font-size: .78rem; }
+.post .btn { padding: 8px 12px; font-size: .72rem; }
+
+/* Full statement */
+.full { padding-block: 40px 140px; }
+details { border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+summary { cursor: pointer; list-style: none; padding: 22px 0; display: flex; justify-content: space-between; align-items: center; gap: 16px; }
+summary::-webkit-details-marker { display: none; }
+summary h2 { font-size: clamp(1.8rem, 4vw, 2.8rem); }
+summary .mono::after { content: " +"; color: var(--amber); }
+details[open] summary .mono::after { content: " −"; }
+.statement { max-width: 66ch; padding-bottom: 40px; background: rgba(13,15,29,.85); }
+.statement p { margin: 0 0 1.2em; }
+.statement p:first-child::first-letter { font-family: var(--display); font-weight: 900; float: left; font-size: 4.4em; line-height: .8; padding: 6px 10px 0 0; color: var(--amber); }
+
+/* Transport bar */
+.transport {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 5;
+  background: rgba(13,15,29,.9); backdrop-filter: blur(8px); border-top: 1px solid var(--line);
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-top: 10px; padding-bottom: calc(10px + env(safe-area-inset-bottom, 0px));
+  display: flex; align-items: center; gap: 16px;
+  font-family: var(--mono); font-size: .74rem; letter-spacing: .08em; text-transform: uppercase; color: var(--muted);
+}
+.transport .tc { color: var(--amber); font-variant-numeric: tabular-nums; }
+.transport .now { flex: 0 1 auto; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.transport .prog { flex: 1; height: 3px; background: var(--line); position: relative; min-width: 40px; }
+.transport .prog i { position: absolute; inset: 0 auto 0 0; width: 0; background: var(--amber); }
+.transport .db { font-variant-numeric: tabular-nums; }
+footer { padding-block: 0 110px; color: var(--muted); font-size: .85rem; }
+
+@media (max-width: 820px) {
+  .brief, .track .cols, .share, .console { grid-template-columns: minmax(0,1fr); }
+  .console .screen { border-right: 0; border-bottom: 1px solid var(--line); }
+  .side { position: static; }
+  .credit-list { grid-template-columns: minmax(0,1fr); }
+  .track { padding-block: 80px; }
+  .transport .db { display: none; }
+  .audience li { grid-template-columns: minmax(0,1fr); gap: 2px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  .rv, .rv.pre { transition: none; transform: none; opacity: 1; }
+  .rec::before { animation: none; }
+}
+</style>
+
+</head>
+<body>
+<canvas id="scope" aria-hidden="true"></canvas>
+
+<main>
+  <header class="hero wrap" data-scope="hero" data-name="Intro">
+    <div class="eyebrow mono"><span class="rec">Rec</span><span>Personal statement</span><span>·</span><span>Prospective Electrical Engineering major</span></div>
+    <h1><span class="quiet">From silence</span><span class="sig">to signal</span></h1>
+    <p class="lede">A self-taught music producer who started with a cheap microphone and free software, and now wants to engineer the technology that lets every voice be heard.</p>
+    <div class="cta">
+      <a class="btn solid" href="#t1">Play the story ▸</a>
+      <a class="btn" href="#mixer">Try the mixer</a>
+      <a class="btn" href="#statement">Read the statement</a>
+    </div>
+  </header>
+
+  <section class="brief wrap" data-scope="hero" data-name="Liner notes" aria-label="Message and audience">
+    <div class="rv">
+      <div class="mono">The message</div>
+      <p class="message">I turn feeling into sound. Now I want to <em>engineer the signal</em> that carries it.</p>
+    </div>
+    <div class="rv">
+      <div class="mono">Who this is for</div>
+      <ul class="audience">
+        <li><b>Admissions</b><span>Committees reviewing applicants to Electrical Engineering programs.</span></li>
+        <li><b>Mentors</b><span>Engineers, professors and audio-tech teams offering research, internships or summer programs.</span></li>
+        <li><b>Artists</b><span>Fellow producers and musicians who know what a bad take feels like.</span></li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- TRACK 01 -->
+  <section class="track wrap" id="t1" data-scope="silence" data-name="01 · Silence">
+    <div class="head rv">
+      <div class="num">01</div>
+      <div class="mono">Track one · −60 dB</div>
+      <h2>Silence</h2>
+    </div>
+    <div class="cols">
+      <div class="prose rv">
+        <p>There is a certain type of emptiness that is created when you begin to feel as if you don't belong in a world that has already accepted you. I have struggled for many years to accept who I am, as opposed to who I am always trying to become.</p>
+        <p>I have faced rejection and discrimination many times, and eventually it began to affect my life. The realization did not come right away, and it surely did not fix everything. It did give me the motivation I needed to do something meaningful to myself.</p>
+      </div>
+      <div class="side rv">
+        <p class="pull">I could only control my actions and what I learned from experience, not how others saw me.<small>The turning point</small></p>
+      </div>
+    </div>
+  </section>
+
+  <!-- TRACK 02 -->
+  <section class="track wrap" id="t2" data-scope="notes" data-name="02 · Notes into songs">
+    <div class="head rv">
+      <div class="num">02</div>
+      <div class="mono">Track two · first signal</div>
+      <h2>Notes into songs</h2>
+    </div>
+    <div class="cols">
+      <div class="prose rv">
+        <p>I began to learn about music production, and it quickly became more than a hobby. I started writing everything I felt in notes, and day by day, those notes turned into songs.</p>
+        <p>That was the first time I felt I had accomplished something, especially when I saw my friends and family connect with the words and admire what I had made.</p>
+      </div>
+      <div class="side rv">
+        <div class="notes" aria-label="Notes becoming songs">
+          <span style="--r:-2deg">note: a world that already accepted me</span>
+          <span style="--r:1.5deg">note: control my actions, learn from the rest</span>
+          <span style="--r:-.8deg">note: make something that means something</span>
+          <span class="song" style="--r:0deg">▸ Bounced to song · 3:42</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- TRACK 03 -->
+  <section class="track wrap" id="t3" data-scope="takes" data-name="03 · Take after take">
+    <div class="head rv">
+      <div class="num">03</div>
+      <div class="mono">Track three · noise floor</div>
+      <h2>Take after take</h2>
+    </div>
+    <div class="cols">
+      <div class="prose rv">
+        <p>When I started producing, I had no idea how hard it would be to record my ideas in a way I was satisfied with. With a simple microphone and free software like BandLab, every attempt became another round of adjusting and re-recording, trying to make it perfect in my ears. None of them turned out the way I hoped.</p>
+        <p>There were times I thought my ideas would never be finished, that I just wasn't talented enough. Giving up would have been the easiest escape.</p>
+        <p>Over time I shifted my perspective. Instead of treating poor recordings as proof of failure, I focused on what I did well and what I could improve on the next try. That changed how I approached my music, and how I express my ideas.</p>
+      </div>
+      <div class="side rv">
+        <div class="takebox" aria-live="off">
+          <div class="row"><span class="mono">Vocal · Take</span><span class="lamp" id="lamp">Clipping</span></div>
+          <div class="take" id="take">01</div>
+          <div class="meter"><i id="meterFill"></i></div>
+          <div class="snr" id="snr">Signal-to-noise: 4 dB</div>
+        </div>
+        <p class="pull">Doing it right isn't always the key to success. Sometimes you need the mistakes to learn how to adapt.<small>Scroll to keep recording</small></p>
+      </div>
+    </div>
+  </section>
+
+  <!-- TRACK 04 -->
+  <section class="track wrap" id="t4" data-scope="signal" data-name="04 · Inside the signal">
+    <div class="head rv">
+      <div class="num">04</div>
+      <div class="mono">Track four · 20 Hz – 20 kHz</div>
+      <h2>Inside the signal</h2>
+    </div>
+    <div class="cols">
+      <div class="prose rv">
+        <p>As I grew more experienced, my interest shifted from the art to the technology that produces it. I began looking past the effects and toward the signals they were manipulating. I wondered how equalization could clear up a muddy vocal, how compression could change the range of sound levels, and how an electrical current could be shaped so precisely.</p>
+        <p>Studying AP Physics and AP Calculus AB, I started connecting those concepts to waves and circuits, and the science of sound production became its own obsession.</p>
+      </div>
+      <div class="side rv">
+        <ul class="questions">
+          <li>How does compression change the energy of a recording?</li>
+          <li>Why does cutting certain frequencies make a vocal clearer?</li>
+          <li>How can a current be shaped this precisely?</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="console rv" id="mixer">
+      <div class="screen">
+        <div class="mono" style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:10px">
+          <span>Frequency response</span><span id="grRead">Gain reduction 0.0 dB</span>
+        </div>
+        <canvas id="eq" aria-label="Equalizer frequency response curve"></canvas>
+        <div class="bar">
+          <button class="btn solid" id="play" type="button">▸ Play a melody</button>
+          <span class="mono">Move the sliders while it plays</span>
+        </div>
+      </div>
+      <div class="knobs">
+        <div class="knob">
+          <label for="low">Low shelf · 200 Hz <output id="lowOut">0 dB</output></label>
+          <input type="range" id="low" min="-15" max="15" step="0.5" value="0">
+          <p>Cut it to remove the mud. Boost it for weight.</p>
+        </div>
+        <div class="knob">
+          <label for="mid">Presence · 1.5 kHz <output id="midOut">0 dB</output></label>
+          <input type="range" id="mid" min="-15" max="15" step="0.5" value="0">
+          <p>Where a voice gets its clarity and edge.</p>
+        </div>
+        <div class="knob">
+          <label for="high">Air · 6 kHz <output id="highOut">0 dB</output></label>
+          <input type="range" id="high" min="-15" max="15" step="0.5" value="0">
+          <p>Brightness and breath.</p>
+        </div>
+        <div class="knob">
+          <label for="comp">Compressor threshold <output id="compOut">0 dB</output></label>
+          <input type="range" id="comp" min="-50" max="0" step="1" value="0">
+          <p>Lower it and the quiet notes rise to meet the loud ones.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- TRACK 05 -->
+  <section class="track wrap" id="t5" data-scope="circuit" data-name="05 · Why Electrical Engineering">
+    <div class="head rv">
+      <div class="num">05</div>
+      <div class="mono">Track five · the circuit</div>
+      <h2>Why Electrical Engineering</h2>
+    </div>
+    <div class="cols">
+      <div class="prose rv">
+        <p>Electrical Engineering combines my two passions: creative self-expression and critical problem solving in mathematics and physics.</p>
+        <p>Its focus on designing and researching electronic circuits, and its depth in audio and mathematical modeling, will help me understand how my voice becomes the sound wave heard on the other end. Then I want to design the technology that makes high-quality, accessible audio production possible for everyone.</p>
+      </div>
+      <div class="side rv">
+        <p class="pull">I want to master the physics behind every song.<small>The goal</small></p>
+      </div>
+    </div>
+    <div class="rv" style="margin-top:48px;overflow-x:auto">
+      <svg class="circuit" id="circuit" viewBox="0 0 900 330" role="img" aria-label="Music production, AP Physics and AP Calculus AB connect into Electrical Engineering">
+        <g class="node"><rect x="10" y="20" width="230" height="56"></rect><text x="28" y="54">Music production</text></g>
+        <g class="node"><rect x="10" y="137" width="230" height="56"></rect><text x="28" y="171">AP Physics</text></g>
+        <g class="node"><rect x="10" y="254" width="230" height="56"></rect><text x="28" y="288">AP Calculus AB</text></g>
+        <path class="trace" d="M240 48 H380 V140 H560"></path>
+        <path class="trace" d="M240 165 H560"></path>
+        <path class="trace" d="M240 282 H380 V190 H560"></path>
+        <circle class="pad" cx="380" cy="48" r="6"></circle>
+        <circle class="pad" cx="380" cy="282" r="6"></circle>
+        <circle class="pad" cx="470" cy="165" r="6"></circle>
+        <g class="node main"><rect x="560" y="110" width="330" height="110"></rect><text x="584" y="158">Electrical</text><text x="584" y="192">Engineering</text></g>
+        <circle class="spark" id="spark" cx="240" cy="165" r="5"></circle>
+      </svg>
+    </div>
+  </section>
+
+  <!-- TRACK 06 -->
+  <section class="track wrap finale" id="t6" data-scope="voice" data-name="06 · Every voice, heard">
+    <div class="head rv">
+      <div class="num">06</div>
+      <div class="mono">Track six · full mix</div>
+      <h2>Every voice, heard</h2>
+    </div>
+    <div class="cols">
+      <div class="prose rv">
+        <p>What began with a pair of headphones, a cheap microphone and a few sliders on a screen has transformed how I understand both music and engineering. Wanting to produce something I'm proud of led me to the instruments behind that production.</p>
+        <p>I want to look past today's technological limits and explore how new systems can be built to improve our understanding and better the world around us. I started making music to improve my own listening experience. Now it has inspired me to build technology that lets voices be heard.</p>
+      </div>
+      <div class="side rv">
+        <p class="pull">To give every artist a voice exactly as it was meant to be heard.<small>The mission</small></p>
+      </div>
+    </div>
+    <h2 class="big rv" style="margin-top:70px">Headphones. Cheap mic.<br>A few sliders.<br><span>Next: the circuit.</span></h2>
+  </section>
+
+  <!-- CREDITS -->
+  <section class="credits wrap" data-scope="voice" data-name="Credits">
+    <div class="mono">Liner notes</div>
+    <h2>Credits &amp; strengths</h2>
+    <div class="credit-list">
+      <div class="credit rv"><div class="k">Resilience</div><h3>Kept recording</h3><p>Turned dozens of failed takes into a method: keep what works, fix what doesn't, try again.</p></div>
+      <div class="credit rv"><div class="k">Curiosity</div><h3>Asked why</h3><p>Went from using EQ and compression to asking how they shape an electrical signal.</p></div>
+      <div class="credit rv"><div class="k">Foundation</div><h3>AP Physics · AP Calc AB</h3><p>Connects coursework on waves and rates of change to real audio problems.</p></div>
+      <div class="credit rv"><div class="k">Creative voice</div><h3>Writer &amp; producer</h3><p>Writes, records and produces original songs that friends and family connect with.</p></div>
+    </div>
+  </section>
+
+  <!-- SHARE -->
+  <section class="share wrap" id="share" data-scope="voice" data-name="Share">
+    <div>
+      <div class="mono">Scan to listen in</div>
+      <h2>Share the signal</h2>
+      <div class="qr-card">
+        <div class="cap"><span>From silence to signal</span><span>Scan me</span></div>
+        <div class="qr" id="qr" role="img" aria-label="QR code linking to this page"></div>
+        <div class="url" id="qrUrl"></div>
+      </div>
+    </div>
+    <div>
+      <div class="mono" style="margin-bottom:14px">Ready-to-post excerpts · Instagram · LinkedIn</div>
+      <div class="posts">
+        <div class="post">
+          <div class="meta"><span class="mono">Post 1 · The why</span><button class="btn copy" type="button">Copy caption</button></div>
+          <blockquote>I started with a cheap mic and free software. Now I want to engineer the technology that gives every artist a voice exactly as it was meant to be heard. Read my story through the link.</blockquote>
+          <div class="tags">#ElectricalEngineering #MusicProduction #AudioEngineering</div>
+        </div>
+        <div class="post">
+          <div class="meta"><span class="mono">Post 2 · The lesson</span><button class="btn copy" type="button">Copy caption</button></div>
+          <blockquote>Take 1 was bad. So was take 20. Every failed recording taught me what to adjust next. Doing it right isn't always the key to success.</blockquote>
+          <div class="tags">#GrowthMindset #Producer #CollegeBound</div>
+        </div>
+        <div class="post">
+          <div class="meta"><span class="mono">Post 3 · The question</span><button class="btn copy" type="button">Copy caption</button></div>
+          <blockquote>Why does cutting a few frequencies make a vocal sound clearer? That question led me from music production to AP Physics, AP Calculus and Electrical Engineering.</blockquote>
+          <div class="tags">#STEM #SignalProcessing #Engineering</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FULL STATEMENT -->
+  <section class="full wrap" id="statement" data-scope="silence" data-name="The full statement">
+    <details>
+      <summary><h2>Read the full statement</h2><span class="mono">Unplugged</span></summary>
+      <div class="statement">
+        <p>There is a certain type of emptiness that is created when you begin to feel as if you don't belong in a world that has already accepted you. I have struggled for many years to accept who I am as opposed to who I am always trying to become. I have faced rejection and discrimination on many occasions, and it eventually began to affect my life. During those times, I learned that I could only control my actions and what I learned from experience, but not the perception of me from others. The realization did not come right away, and it surely did not fix everything. However, it did provide the motivation I needed to do something that is meaningful to myself. I began to learn about music production, and shortly, it became more than just a hobby. I started writing everything I felt in notes, and day by day, those notes turned into songs. That was the first time I ever felt I accomplished something, especially when I saw my friends and family connect with the words and admire my talent. However, the true obsession began when I started getting more curious about the processes that allowed me to create music in the first place, which includes the conversion of electrical signals into sound waves and their manipulation. As my curiosity grew every day, I finally discovered that Electrical Engineering was the most relevant major to help me satisfy my creative need while learning new skills.</p>
+        <p>I want to master the physics behind each and every song and expand my knowledge to give every artist a voice exactly as it was meant to be heard.</p>
+        <p>When I initially started producing music, I had no clue how difficult it would be to record my musical ideas in a way that I would be satisfied with. Recording my vocals using just a simple microphone and free recording software such as BandLab became a boring task that I hated doing. Each recording attempt, I would continuously try to adjust and improve it in order to make it perfect in my ears, but in the end, none of them would turn out as I had hoped. At times, I thought that my ideas would never come to completion and that I just wasn't talented enough to record worthy material. There were many times when giving up and admitting defeat was the easiest escape from the discouraging results. However, over time, I learned how to shift my perspective on not only my recordings but my music as well. Instead of viewing my poor recording attempts as proof of my failures, I began to focus on what I did well and what could be improved for future tries. As a result, I gained a new perspective on my music and recordings, as well as an understanding of how to more effectively express my creative ideas. The most important lesson I took away from this experience is that doing it right isn't always the key to success. It is sometimes necessary to make mistakes in order to learn how to adapt or adjust your strategy for future efforts. This lesson has not only helped me record better music but has also helped me carry on with other tasks that I find challenging.</p>
+        <p>As I grew more experienced with music production, my interests began to shift from the art itself to the technology which produces it. How might compression affect the energy and character of a recording? Why did cutting certain frequencies make a vocal sound clearer? I began looking beyond the effects and instead towards the signals they were manipulating. I wondered how equalization could improve unclear vocals or how compression could change the range of sound levels, and I began to wonder how an electrical current could be shaped in such precise ways. With my studies in AP Physics and AP Calculus AB, I began to ask myself how these concepts could relate to waves and circuits, and subsequently developed an interest in the science of sound production. I have learned the importance of Electrical Engineering as a discipline which combines my two major passions for creative self-expression and critical problem solving in mathematics and physics. The field's attention to the creation and research of electronic circuits and its exploration of the technical details of audio production and mathematical modeling will help me not only further understand the processes which turn my voice into sound waves heard on the other end, but also design the technology which makes high-quality and accessible audio production possible.</p>
+        <p>What began with a pair of headphones, a cheap microphone, and a few sliders on a screen has transformed my understanding of both music and engineering. The desire to produce something I am proud of led to an interest in the instruments that support that production. I want to innovate by looking beyond present technological boundaries and exploring how new technologies and systems may be built to improve our understanding and better the world around us. My Electrical Engineering studies will allow me to keep studying the ways in which technology can be pushed to its limits. While I started learning music production to improve my own listening experience, it has inspired me to learn how to develop technology that allows voices to be heard.</p>
+      </div>
+    </details>
+  </section>
+
+  <footer class="wrap"><span class="mono">From Silence to Signal · a personal statement · recorded 2026</span></footer>
+</main>
+
+<div class="transport" aria-hidden="true">
+  <span class="tc" id="tc">00:00</span>
+  <span class="now" id="now">Intro</span>
+  <span class="prog"><i id="prog"></i></span>
+  <span class="db" id="db">−18 dB</span>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
+<script>
+(() => {
+  const PAGE_URL = ""; // empty = use whatever address the site is hosted at
+  const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  /* ---------- Oscilloscope background ---------- */
+  const PRESETS = {
+    hero:    { amp: .55, noise: .04, harm: 3, odd: 0, alpha: .55, speed: 1 },
+    silence: { amp: .02, noise: .015, harm: 1, odd: 0, alpha: .35, speed: .4 },
+    notes:   { amp: .32, noise: .04, harm: 2, odd: 0, alpha: .32, speed: .8 },
+    takes:   { amp: .6,  noise: .9,  harm: 3, odd: 0, alpha: .32, speed: 1.2 },
+    signal:  { amp: .45, noise: 0,   harm: 6, odd: 0, alpha: .3,  speed: 1 },
+    circuit: { amp: .42, noise: 0,   harm: 9, odd: 1, alpha: .3,  speed: .7 },
+    voice:   { amp: .75, noise: 0,   harm: 7, odd: 0, alpha: .38, speed: 1 }
+  };
+  const cv = document.getElementById("scope"), cx = cv.getContext("2d");
+  let W = 0, H = 0, dpr = 1;
+  function size() {
+    dpr = Math.min(devicePixelRatio || 1, 2);
+    W = innerWidth; H = innerHeight;
+    cv.width = W * dpr; cv.height = H * dpr;
+    cx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+  size(); addEventListener("resize", size);
+
+  const cur = { ...PRESETS.hero };
+  let target = { ...PRESETS.hero }, phase = 0, level = 0;
+  const amber = "255,181,71", line = "42,48,80";
+
+  function wave(x, p) {
+    let y = 0;
+    for (let k = 1; k <= Math.round(p.harm); k++) {
+      const n = p.odd ? 2 * k - 1 : k;
+      y += Math.sin(n * (x * 6.283 * 2.2 + phase)) / n;
+    }
+    const env = .65 + .35 * Math.sin(x * 3.1 + phase * .25);
+    return y * env;
+  }
+
+  function draw() {
+    for (const k in cur) cur[k] += (target[k] - cur[k]) * .06;
+    phase += .03 * cur.speed * (reduce ? 0 : 1);
+    cx.clearRect(0, 0, W, H);
+    // graticule
+    cx.strokeStyle = `rgba(${line},.35)`; cx.lineWidth = 1;
+    const g = Math.max(60, W / 12);
+    cx.beginPath();
+    for (let x = (W % g) / 2; x < W; x += g) { cx.moveTo(x, 0); cx.lineTo(x, H); }
+    for (let y = H / 2 % g; y < H; y += g) { cx.moveTo(0, y); cx.lineTo(W, y); }
+    cx.stroke();
+    // trace
+    const mid = H * .5, A = Math.min(H * .22, 200) * cur.amp;
+    let peak = 0;
+    const pass = (w, a) => {
+      cx.strokeStyle = `rgba(${amber},${a})`; cx.lineWidth = w;
+      cx.beginPath();
+      for (let x = 0; x <= W; x += 3) {
+        const u = x / W;
+        let v = wave(u, cur) * A + (Math.random() - .5) * 2 * cur.noise * A * 1.1;
+        if (Math.abs(v) > peak) peak = Math.abs(v);
+        x ? cx.lineTo(x, mid + v) : cx.moveTo(x, mid + v);
+      }
+      cx.stroke();
+    };
+    pass(6, cur.alpha * .18);
+    pass(1.6, cur.alpha);
+    level = peak / (Math.min(H * .22, 200) * 1.8 + 1);
+    if (!reduce) requestAnimationFrame(draw);
+  }
+  draw();
+  if (reduce) setInterval(draw, 400);
+
+  /* ---------- Scroll logic ---------- */
+  const scopes = [...document.querySelectorAll("[data-scope]")];
+  const tc = document.getElementById("tc"), now = document.getElementById("now"),
+        prog = document.getElementById("prog"), db = document.getElementById("db");
+  const take = document.getElementById("take"), lamp = document.getElementById("lamp"),
+        meterFill = document.getElementById("meterFill"), snr = document.getElementById("snr");
+  const spark = document.getElementById("spark");
+  const traces = [...document.querySelectorAll("#circuit .trace")];
+  traces.forEach(t => { const L = t.getTotalLength(); t.style.strokeDasharray = L; t.dataset.len = L; });
+  const SONG = 252; // 4:12
+
+  function clamp(v, a = 0, b = 1) { return Math.max(a, Math.min(b, v)); }
+  function fmt(s) { s = Math.floor(s); return String(Math.floor(s / 60)).padStart(2, "0") + ":" + String(s % 60).padStart(2, "0"); }
+
+  function onScroll() {
+    const vh = innerHeight, line = vh * .6;
+    let active = scopes[0], p = 0;
+    for (const el of scopes) {
+      const r = el.getBoundingClientRect();
+      if (r.top <= line) { active = el; p = clamp((line - r.top) / r.height); }
+    }
+    const key = active.dataset.scope;
+    target = { ...PRESETS[key] };
+    now.textContent = active.dataset.name;
+
+    if (key === "takes") {
+      target.noise = .9 * (1 - p) + .03;
+      const n = 1 + Math.round(p * 46);
+      take.textContent = String(n).padStart(2, "0");
+      const good = p > .82;
+      lamp.textContent = good ? "Good take" : (p > .45 ? "Retake" : "Clipping");
+      lamp.classList.toggle("good", good);
+      snr.textContent = "Signal-to-noise: " + Math.round(4 + p * 58) + " dB";
+      meterFill.style.width = (96 - p * 30) + "%";
+    }
+    // circuit traces draw in
+    const cr = document.getElementById("circuit").getBoundingClientRect();
+    const cp = reduce ? 1 : clamp((vh * .9 - cr.top) / (vh * .55));
+    traces.forEach(t => t.style.strokeDashoffset = t.dataset.len * (1 - cp));
+    spark.setAttribute("cx", 240 + cp * 320);
+    spark.style.opacity = cp > .02 && cp < .99 ? 1 : 0;
+
+    const doc = document.documentElement;
+    const frac = clamp(scrollY / (doc.scrollHeight - vh || 1));
+    prog.style.width = (frac * 100) + "%";
+    tc.textContent = fmt(frac * SONG) + " / " + fmt(SONG);
+  }
+  addEventListener("scroll", onScroll, { passive: true });
+  addEventListener("resize", onScroll);
+  onScroll();
+  setInterval(() => { db.textContent = "−" + Math.max(0, Math.round(60 - level * 60)).toString().padStart(2, "0") + " dB"; }, 120);
+
+  /* ---------- Reveal (starts visible; only below-fold items are nudged) ---------- */
+  if (!reduce && "IntersectionObserver" in window) {
+    const io = new IntersectionObserver(es => es.forEach(e => {
+      if (e.isIntersecting) { e.target.classList.remove("pre"); io.unobserve(e.target); }
+    }), { rootMargin: "0px 0px -8% 0px" });
+    document.querySelectorAll(".rv").forEach(el => {
+      if (el.getBoundingClientRect().top > innerHeight) { el.classList.add("pre"); io.observe(el); }
+    });
+  }
+
+  /* ---------- Mixer (Web Audio) ---------- */
+  const eqc = document.getElementById("eq"), ex = eqc.getContext("2d");
+  const ids = ["low", "mid", "high", "comp"];
+  const inputs = Object.fromEntries(ids.map(i => [i, document.getElementById(i)]));
+  let ac, low, mid, high, comp, makeup, analyser, playing = false, timer, oscs = [], vca;
+
+  function ensureAudio() {
+    if (ac) return true;
+    try { ac = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { return false; }
+    low = ac.createBiquadFilter(); low.type = "lowshelf"; low.frequency.value = 200;
+    mid = ac.createBiquadFilter(); mid.type = "peaking"; mid.frequency.value = 1500; mid.Q.value = 1;
+    high = ac.createBiquadFilter(); high.type = "highshelf"; high.frequency.value = 6000;
+    comp = ac.createDynamicsCompressor(); comp.ratio.value = 8; comp.knee.value = 6; comp.attack.value = .004; comp.release.value = .18;
+    makeup = ac.createGain(); analyser = ac.createAnalyser(); analyser.fftSize = 2048; analyser.smoothingTimeConstant = .8;
+    low.connect(mid); mid.connect(high); high.connect(comp); comp.connect(makeup); makeup.connect(analyser); analyser.connect(ac.destination);
+    apply();
+    return true;
+  }
+  function apply() {
+    const v = Object.fromEntries(ids.map(i => [i, +inputs[i].value]));
+    document.getElementById("lowOut").textContent = (v.low > 0 ? "+" : "") + v.low + " dB";
+    document.getElementById("midOut").textContent = (v.mid > 0 ? "+" : "") + v.mid + " dB";
+    document.getElementById("highOut").textContent = (v.high > 0 ? "+" : "") + v.high + " dB";
+    document.getElementById("compOut").textContent = v.comp + " dB";
+    if (!ac) return;
+    low.gain.value = v.low; mid.gain.value = v.mid; high.gain.value = v.high;
+    comp.threshold.value = v.comp;
+    makeup.gain.value = Math.pow(10, (-v.comp * .35) / 20) * .5;
+  }
+  ids.forEach(i => inputs[i].addEventListener("input", () => { apply(); }));
+
+  const MELODY = [[220, 1], [261.63, .3], [329.63, .85], [293.66, .25], [246.94, .9], [220, .35], [196, .75], [220, .2]];
+  function start() {
+    if (!ensureAudio()) return;
+    ac.resume();
+    vca = ac.createGain(); vca.gain.value = 0; vca.connect(low);
+    const o1 = ac.createOscillator(); o1.type = "sawtooth";
+    const o2 = ac.createOscillator(); o2.type = "square";
+    const g2 = ac.createGain(); g2.gain.value = .25;
+    const lfo = ac.createOscillator(); lfo.frequency.value = 5.5;
+    const lg = ac.createGain(); lg.gain.value = 3;
+    lfo.connect(lg); lg.connect(o1.frequency); lg.connect(o2.frequency);
+    o1.connect(vca); o2.connect(g2); g2.connect(vca);
+    [o1, o2, lfo].forEach(o => o.start());
+    oscs = [o1, o2, lfo];
+    let i = 0;
+    const step = () => {
+      const [f, vel] = MELODY[i++ % MELODY.length], t = ac.currentTime;
+      o1.frequency.setTargetAtTime(f, t, .01); o2.frequency.setTargetAtTime(f / 2, t, .01);
+      vca.gain.cancelScheduledValues(t);
+      vca.gain.setTargetAtTime(.35 * vel, t, .01);
+      vca.gain.setTargetAtTime(.04 * vel, t + .22, .08);
+    };
+    step(); timer = setInterval(step, 380);
+    playing = true; playBtn.textContent = "■ Stop";
+  }
+  function stop() {
+    clearInterval(timer);
+    if (vca) vca.gain.setTargetAtTime(0, ac.currentTime, .03);
+    const os = oscs; setTimeout(() => os.forEach(o => { try { o.stop(); } catch (e) {} }), 150);
+    oscs = []; playing = false; playBtn.textContent = "▸ Play a melody";
+  }
+  const playBtn = document.getElementById("play");
+  playBtn.addEventListener("click", () => playing ? stop() : start());
+
+  const NP = 240, freqs = new Float32Array(NP);
+  for (let i = 0; i < NP; i++) freqs[i] = 20 * Math.pow(1000, i / (NP - 1));
+  const m1 = new Float32Array(NP), m2 = new Float32Array(NP), m3 = new Float32Array(NP), ph = new Float32Array(NP);
+  let spec;
+  const grRead = document.getElementById("grRead");
+
+  function eqDraw() {
+    const r = eqc.getBoundingClientRect(), w = r.width, h = r.height, d = Math.min(devicePixelRatio || 1, 2);
+    if (eqc.width !== Math.round(w * d)) { eqc.width = Math.round(w * d); eqc.height = Math.round(h * d); }
+    ex.setTransform(d, 0, 0, d, 0, 0);
+    ex.clearRect(0, 0, w, h);
+    const xOf = f => Math.log10(f / 20) / 3 * w, yOf = dbv => h / 2 - dbv / 18 * (h / 2 - 14);
+    ex.font = "10px 'JetBrains Mono', monospace"; ex.fillStyle = "#9b9dbb"; ex.strokeStyle = "rgba(42,48,80,1)"; ex.lineWidth = 1;
+    [100, 1000, 10000].forEach(f => { const x = xOf(f); ex.beginPath(); ex.moveTo(x, 0); ex.lineTo(x, h); ex.stroke(); ex.fillText(f >= 1000 ? f / 1000 + "k" : f, x + 4, h - 6); });
+    [-12, 0, 12].forEach(v => { const y = yOf(v); ex.beginPath(); ex.moveTo(0, y); ex.lineTo(w, y); ex.stroke(); ex.fillText((v > 0 ? "+" : "") + v + " dB", 4, y - 4); });
+    // live spectrum
+    if (playing && analyser) {
+      spec = spec || new Uint8Array(analyser.frequencyBinCount);
+      analyser.getByteFrequencyData(spec);
+      const ny = ac.sampleRate / 2;
+      ex.fillStyle = "rgba(255,181,71,.18)";
+      for (let i = 1; i < spec.length; i++) {
+        const f = i * ny / spec.length; if (f < 20 || f > 20000) continue;
+        const x = xOf(f), bh = spec[i] / 255 * h * .9;
+        ex.fillRect(x, h - bh, 2, bh);
+      }
+      grRead.textContent = "Gain reduction " + Math.abs(comp.reduction || 0).toFixed(1) + " dB";
+    } else grRead.textContent = "Gain reduction 0.0 dB";
+    // response curve
+    let mags;
+    if (ac) {
+      low.getFrequencyResponse(freqs, m1, ph); mid.getFrequencyResponse(freqs, m2, ph); high.getFrequencyResponse(freqs, m3, ph);
+      mags = i => 20 * Math.log10(m1[i] * m2[i] * m3[i]);
+    } else mags = () => 0;
+    ex.strokeStyle = "#ffb547"; ex.lineWidth = 2.5; ex.beginPath();
+    for (let i = 0; i < NP; i++) { const x = xOf(freqs[i]), y = yOf(clamp(mags(i), -18, 18)); i ? ex.lineTo(x, y) : ex.moveTo(x, y); }
+    ex.stroke();
+    requestAnimationFrame(eqDraw);
+  }
+  // Build the filter graph lazily on first slider touch so the curve is accurate; draw flat until then.
+  ids.forEach(i => inputs[i].addEventListener("pointerdown", ensureAudio, { once: true }));
+  ids.forEach(i => inputs[i].addEventListener("keydown", ensureAudio, { once: true }));
+  apply(); eqDraw();
+
+  /* ---------- Copy captions ---------- */
+  document.querySelectorAll(".post").forEach(p => {
+    const b = p.querySelector(".copy");
+    b.addEventListener("click", () => {
+      const text = p.querySelector("blockquote").textContent.trim() + "\n\n" + (PAGE_URL || location.href) + "\n\n" + p.querySelector(".tags").textContent.trim();
+      const done = () => { b.textContent = "Copied"; setTimeout(() => b.textContent = "Copy caption", 1600); };
+      const fallback = () => { const s = getSelection(), r = document.createRange(); r.selectNodeContents(p.querySelector("blockquote")); s.removeAllRanges(); s.addRange(r); b.textContent = "Selected, press Ctrl+C"; };
+      try { navigator.clipboard.writeText(text).then(done, fallback); } catch (e) { fallback(); }
+    });
+  });
+
+  /* ---------- QR code ---------- */
+  const url = PAGE_URL || location.href.split("#")[0];
+  document.getElementById("qrUrl").textContent = url;
+  try {
+    const qr = qrcode(0, "M"); qr.addData(url); qr.make();
+    document.getElementById("qr").innerHTML = qr.createSvgTag({ cellSize: 6, margin: 2, scalable: true });
+  } catch (e) { document.getElementById("qr").textContent = "QR code unavailable"; }
+})();
+</script>
+
+</body>
+</html>
